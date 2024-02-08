@@ -1,21 +1,13 @@
 import { Sort as SortPrisma } from '@prisma/client';
-import { Exclude } from 'class-transformer';
 
-export class Sort implements SortPrisma {
+export class Sort {
   id: number;
   name: string;
   categoryId: number;
 
-  @Exclude()
-  deleted: boolean;
-
-  @Exclude()
   deletedAt: Date;
 
-  @Exclude()
-  deletedBy: number;
-
-  constructor(partial: Partial<Sort>) {
+  constructor(partial: SortPrisma) {
     Object.assign(this, partial);
   }
 }

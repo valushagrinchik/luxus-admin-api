@@ -40,7 +40,7 @@ export class CategoriesService {
   update(id: number, data: UpdateCategoryDto) {
     return this.prisma.category.update({
       data: {
-        name: data.name,
+        ...(data.name ? { name: data.name } : {}),
         ...(data.groupId
           ? {
               group: {
