@@ -22,8 +22,8 @@ export class GroupsController {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
-  async findAll(): Promise<Group[]> {
-    const groups = await this.groupsService.findAll();
+  async findAll(@Param('name') name: string): Promise<Group[]> {
+    const groups = await this.groupsService.findAll({ name });
     return groups.map((group) => new Group(group));
   }
 
@@ -42,6 +42,13 @@ export class GroupsController {
   ) {
     const group = await this.groupsService.update(+id, updateGroupDto);
     return new Group(group);
+  }
+
+  @Post(':id')
+  async cancel(@Req() request: Request, @Param('id') id: string) {
+    const user = new AuthorizedUser(request['user']);
+    await this.groupsService.cancel(+id, user);
+    return { group: id };
   }
 
   @Delete(':id')

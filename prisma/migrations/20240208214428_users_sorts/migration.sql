@@ -44,13 +44,13 @@ CREATE TABLE "users" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "groups_name_key" ON "groups"("name");
+CREATE UNIQUE INDEX "groups_name_deleted_key" ON "groups"("name", "deleted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "categories_groupId_name_key" ON "categories"("groupId", "name");
+CREATE UNIQUE INDEX "categories_groupId_name_deleted_key" ON "categories"("groupId", "name", "deleted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "sorts_categoryId_name_key" ON "sorts"("categoryId", "name");
+CREATE UNIQUE INDEX "sorts_categoryId_name_deleted_key" ON "sorts"("categoryId", "name", "deleted");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");

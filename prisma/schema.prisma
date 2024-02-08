@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
   binaryTargets="native"
 }
 
@@ -22,7 +23,7 @@ model Group {
   deletedAt DateTime?
   deletedBy Int?
 
-  @@unique([name, deleted], name: "existing_name")
+  @@unique([name, deleted], name: "existing_group")
   @@map("groups")
 }
 
@@ -40,7 +41,7 @@ model Category {
   deletedAt DateTime?
   deletedBy Int?
  
-  @@unique([groupId, name], name: "group_category")
+  @@unique([groupId, name, deleted], name: "existing_category")
   @@map("categories")
 }
 
@@ -57,7 +58,7 @@ model Sort {
   deletedAt DateTime?
   deletedBy Int?
 
-  @@unique([categoryId, name], name: "category_sort")
+  @@unique([categoryId, name, deleted], name: "existing_sort")
   @@map("sorts")
 }
 

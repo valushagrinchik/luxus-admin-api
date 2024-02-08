@@ -1,15 +1,16 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
-import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
 import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
+import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
 
 @Injectable()
-export class GroupsService {
+export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(filter?: { name: string }) {
-    return this.prisma.group.findMany({
+    return this.prisma.category.findMany({
       where: {
         deleted: false,
         ...(filter
@@ -23,17 +24,31 @@ export class GroupsService {
     });
   }
 
-  async create(data: Prisma.GroupCreateInput) {
-    return this.prisma.group.create({
+  create(data: CreateCategoryDto) {
+    return this.prisma.category.create({
       data: {
         name: data.name,
+        group: {
+          connect: {
+            id: data.groupId,
+          },
+        },
       },
     });
   }
 
-  update(id: number, data: Prisma.GroupUpdateInput) {
-    return this.prisma.group.update({
-      data,
+  update(id: number, data: UpdateCategoryDto) {
+    return this.prisma.category.update({
+      data: {
+        name: data.name,
+        ...(data.groupId
+          ? {
+              group: {
+                connect: { id: data.groupId },
+              },
+            }
+          : {}),
+      },
       where: {
         id,
         deleted: false,
@@ -42,7 +57,7 @@ export class GroupsService {
   }
 
   remove(id: number, userId: number) {
-    return this.prisma.group.update({
+    return this.prisma.category.update({
       data: {
         deletedAt: new Date(),
         deletedBy: userId,
@@ -55,7 +70,7 @@ export class GroupsService {
   }
 
   cancel(id: number, user: AuthorizedUser) {
-    return this.prisma.group.update({
+    return this.prisma.category.update({
       data: {
         deletedAt: null,
         deletedBy: null,
@@ -73,26 +88,26 @@ export class GroupsService {
   }
 
   async adminRemove(id: number, userId: number) {
-    const group = await this.prisma.group.findUnique({
+    const category = await this.prisma.category.findUnique({
       where: { id, deleted: false },
     });
-    if (!group) {
+    if (!category) {
       throw new HttpException(
         {
           statusCode: HttpStatus.NOT_FOUND,
-          error: ERROR_CODES.GROUP_NOT_FOUND,
-          message: [ERROR_MESSAGES[ERROR_CODES.GROUP_NOT_FOUND]],
+          error: ERROR_CODES.CATEGORY_NOT_FOUND,
+          message: [ERROR_MESSAGES[ERROR_CODES.CATEGORY_NOT_FOUND]],
         },
         HttpStatus.NOT_FOUND,
       );
     }
-    return this.prisma.group.update({
+    return this.prisma.category.update({
       data: {
         // true means that admin approved the operation
         deleted: true,
         // set deletedAt and deletedBy if admin initiated removing or leave as is if not
-        deletedAt: group.deletedAt || new Date(),
-        deletedBy: group.deletedBy || userId,
+        deletedAt: category.deletedAt || new Date(),
+        deletedBy: category.deletedBy || userId,
       },
       where: {
         id,

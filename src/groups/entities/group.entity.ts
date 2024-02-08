@@ -1,19 +1,11 @@
 import { Group as GroupPrisma } from '@prisma/client';
-import { Exclude } from 'class-transformer';
 
-export class Group implements GroupPrisma {
+export class Group {
   id: number;
   name: string;
-
-  @Exclude()
-  deleted: boolean;
-
   deletedAt: Date;
 
-  @Exclude()
-  deletedBy: number;
-
-  constructor(partial: Partial<Group>) {
+  constructor(partial: GroupPrisma) {
     Object.assign(this, partial);
   }
 }
