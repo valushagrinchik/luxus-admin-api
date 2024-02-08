@@ -22,7 +22,7 @@ model Group {
   deletedAt DateTime?
   deletedBy Int?
 
-  @@unique(name)
+  @@unique([name, deleted], name: "existing_name")
   @@map("groups")
 }
 

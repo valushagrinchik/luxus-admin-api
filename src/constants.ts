@@ -1,0 +1,8 @@
+export enum ERROR_CODES {
+  GROUP_NOT_FOUND = 'GROUP_NOT_FOUND',
+  GROUP_ALREADY_EXISTS = 'GROUP_ALREADY_EXISTS',
+}
+export const ERROR_MESSAGES = {
+  [ERROR_CODES.GROUP_NOT_FOUND]: 'Группа не существует',
+  [ERROR_CODES.GROUP_ALREADY_EXISTS]: 'Группа уже существует',
+};

@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
 
 @Injectable()
 export class GroupsService {
@@ -14,9 +15,11 @@ export class GroupsService {
     });
   }
 
-  create(data: Prisma.GroupCreateInput) {
+  async create(data: Prisma.GroupCreateInput) {
     return this.prisma.group.create({
-      data,
+      data: {
+        name: data.name,
+      },
     });
   }
 
@@ -25,20 +28,12 @@ export class GroupsService {
       data,
       where: {
         id,
+        deleted: false,
       },
     });
   }
 
   remove(id: number, userId: number) {
-    // const group = await this.prisma.group.findUnique({
-    //   where: { id, deleted: false },
-    // });
-    // if (!group) {
-    //   throw new BadRequestException(['ALREADY_DELETED'], {
-    //     description: 'ALREADY_DELETED',
-    //   });
-    // }
-
     return this.prisma.group.update({
       data: {
         deletedAt: new Date(),
@@ -56,9 +51,14 @@ export class GroupsService {
       where: { id, deleted: false },
     });
     if (!group) {
-      throw new BadRequestException(['ALREADY_DELETED'], {
-        description: 'ALREADY_DELETED',
-      });
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.NOT_FOUND,
+          error: ERROR_CODES.GROUP_NOT_FOUND,
+          message: [ERROR_MESSAGES[ERROR_CODES.GROUP_NOT_FOUND]],
+        },
+        HttpStatus.NOT_FOUND,
+      );
     }
     return this.prisma.group.update({
       data: {
