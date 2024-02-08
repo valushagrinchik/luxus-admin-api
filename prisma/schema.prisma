@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets="native"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Group {
+  id        Int      @default(autoincrement()) @id
+  name      String
+  categories Category[] @relation("group")
+
+  // approved by admin
+  deleted   Boolean @default(false)
+  // if not null - deleted by user(requires an approve by admin)
+  deletedAt DateTime?
+  deletedBy Int?
+
+  @@unique(name)
+  @@map("groups")
+}
+
+model Category {
+  id        Int      @default(autoincrement()) @id
+  name      String
+
+  groupId   Int
+  group     Group @relation("group", fields: [groupId], references: [id])
+  sorts     Sort[] @relation("category")
+
+  // approved by admin
+  deleted   Boolean @default(false)
+  // if not null - deleted by user(requires an approve by admin)
+  deletedAt DateTime?
+  deletedBy Int?
+ 
+  @@unique([groupId, name], name: "group_category")
+  @@map("categories")
+}
+
+model Sort {
+  id        Int      @default(autoincrement()) @id
+  name      String
+
+  categoryId   Int
+  category     Category @relation("category", fields: [categoryId], references: [id])
+
+  // approved by admin
+  deleted   Boolean @default(false)
+  // if not null - deleted by user(requires an approve by admin)
+  deletedAt DateTime?
+  deletedBy Int?
+
+  @@unique([categoryId, name], name: "category_sort")
+  @@map("sorts")
+}
+
+model User {
+  id        Int      @default(autoincrement()) @id
+  email     String
+  password  String
+  role      String
+  
+  @@unique(email)
+  @@map("users")
+}
+
