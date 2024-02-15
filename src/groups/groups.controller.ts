@@ -9,6 +9,7 @@ import {
   ClassSerializerInterceptor,
   UseInterceptors,
   Req,
+  Query,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -22,16 +23,37 @@ export class GroupsController {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
-  async findAll(@Param('name') name: string): Promise<Group[]> {
-    const groups = await this.groupsService.findAll({ name });
+  async findAll(): Promise<Group[]> {
+    const groups = await this.groupsService.findAll();
     return groups.map((group) => new Group(group));
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post()
-  async create(@Body() createGroupDto: CreateGroupDto) {
-    const group = await this.groupsService.create(createGroupDto);
-    return new Group(group);
+  @Get('search')
+  async search(
+    @Query()
+    search: {
+      search: string;
+      type: string;
+      offset: number;
+      limit: number;
+    },
+  ): Promise<Group[]> {
+    const groups = await this.groupsService.search(search);
+    return groups.map((group) => new Group(group));
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('search/total')
+  async searchTotal(
+    @Query()
+    search: {
+      search: string;
+      type: string;
+    },
+  ): Promise<{ total: number }> {
+    const total = await this.groupsService.searchTotal(search);
+    return { total };
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
@@ -41,6 +63,13 @@ export class GroupsController {
     @Body() updateGroupDto: UpdateGroupDto,
   ) {
     const group = await this.groupsService.update(+id, updateGroupDto);
+    return new Group(group);
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Post()
+  async create(@Body() createGroupDto: CreateGroupDto) {
+    const group = await this.groupsService.create(createGroupDto);
     return new Group(group);
   }
 

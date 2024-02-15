@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Req,
+  Query,
 } from '@nestjs/common';
 import { SortsService } from './sorts.service';
 import { Sort } from './entities/sort.entity';
@@ -19,13 +20,6 @@ import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 @Controller('sorts')
 export class SortsController {
   constructor(private readonly sortsService: SortsService) {}
-
-  @UseInterceptors(ClassSerializerInterceptor)
-  @Get()
-  async findAll(@Param('name') name: string): Promise<Sort[]> {
-    const sorts = await this.sortsService.findAll({ name });
-    return sorts.map((sort) => new Sort(sort));
-  }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Post()

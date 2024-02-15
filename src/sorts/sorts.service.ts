@@ -9,21 +9,6 @@ import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
 export class SortsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(filter?: { name: string }) {
-    return this.prisma.sort.findMany({
-      where: {
-        deleted: false,
-        ...(filter
-          ? {
-              name: {
-                search: filter.name,
-              },
-            }
-          : {}),
-      },
-    });
-  }
-
   async create(data: CreateSortDto) {
     return this.prisma.sort.create({
       data: {
@@ -103,6 +88,7 @@ export class SortsService {
     }
     return this.prisma.sort.update({
       data: {
+        name: `${sort.name}_${new Date().getTime()}`,
         // true means that admin approved the operation
         deleted: true,
         // set deletedAt and deletedBy if admin initiated removing or leave as is if not

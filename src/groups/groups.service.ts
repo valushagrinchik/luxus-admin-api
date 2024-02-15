@@ -8,18 +8,108 @@ import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 export class GroupsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(filter?: { name: string }) {
+  async findAll() {
     return this.prisma.group.findMany({
       where: {
         deleted: false,
-        ...(filter
+      },
+    });
+  }
+
+  buildSearchParams = (filter?: { search: string; type: string }) => {
+    const include: Prisma.GroupInclude = {
+      categories: {
+        where: {
+          deleted: false,
+        },
+        orderBy: {
+          name: 'asc',
+        },
+        include: {
+          sorts: {
+            where: {
+              deleted: false,
+            },
+            orderBy: {
+              name: 'asc',
+            },
+          },
+        },
+      },
+    };
+    if (!filter?.search) {
+      return {
+        where: {
+          deleted: false,
+        },
+        include,
+      };
+    }
+
+    return {
+      where: {
+        deleted: false,
+        ...(filter.type === 'group' && filter.search
           ? {
               name: {
-                search: filter.name,
+                contains: filter.search,
+                mode: Prisma.QueryMode.insensitive,
+              },
+            }
+          : {}),
+        ...(filter.type === 'category' && filter.search
+          ? {
+              categories: {
+                some: {
+                  name: {
+                    contains: filter.search,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                },
+              },
+            }
+          : {}),
+        ...(filter.type === 'sort' && filter.search
+          ? {
+              categories: {
+                some: {
+                  sorts: {
+                    some: {
+                      name: {
+                        contains: filter.search,
+                        mode: Prisma.QueryMode.insensitive,
+                      },
+                    },
+                  },
+                },
               },
             }
           : {}),
       },
+      include,
+    };
+  };
+
+  async searchTotal(filter?: { search: string; type: string }) {
+    const params: Prisma.GroupFindManyArgs = this.buildSearchParams(filter);
+    const res = await this.prisma.group.findMany(params);
+    return res.length;
+  }
+
+  async search(filter?: {
+    search: string;
+    type: string;
+    offset: number;
+    limit: number;
+  }) {
+    const params: Prisma.GroupFindManyArgs = this.buildSearchParams(filter);
+    return this.prisma.group.findMany({
+      ...params,
+      orderBy: {
+        name: 'asc',
+      },
+      skip: +filter.offset,
+      take: +filter.limit,
     });
   }
 
@@ -88,6 +178,7 @@ export class GroupsService {
     }
     return this.prisma.group.update({
       data: {
+        name: `${group.name}_${new Date().getTime()}`,
         // true means that admin approved the operation
         deleted: true,
         // set deletedAt and deletedBy if admin initiated removing or leave as is if not

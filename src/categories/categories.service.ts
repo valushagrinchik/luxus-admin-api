@@ -9,14 +9,16 @@ import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(filter?: { name: string }) {
+  async findAll(params: { groupId?: number }) {
     return this.prisma.category.findMany({
       where: {
         deleted: false,
-        ...(filter
+        ...(params?.groupId
           ? {
-              name: {
-                search: filter.name,
+              group: {
+                is: {
+                  id: +params.groupId,
+                },
               },
             }
           : {}),
@@ -103,6 +105,7 @@ export class CategoriesService {
     }
     return this.prisma.category.update({
       data: {
+        name: `${category.name}_${new Date().getTime()}`,
         // true means that admin approved the operation
         deleted: true,
         // set deletedAt and deletedBy if admin initiated removing or leave as is if not

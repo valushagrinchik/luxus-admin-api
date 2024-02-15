@@ -5,8 +5,12 @@ export enum ERROR_CODES {
   CATEGORY_ALREADY_EXISTS = 'CATEGORY_ALREADY_EXISTS',
   SORT_NOT_FOUND = 'SORT_NOT_FOUND',
   SORT_ALREADY_EXISTS = 'SORT_ALREADY_EXISTS',
+  USER_NOT_FOUND = 'USER_NOT_FOUND',
+  UNAUTHORIZED = 'UNAUTHORIZED',
 }
 export const ERROR_MESSAGES = {
+  [ERROR_CODES.UNAUTHORIZED]: 'Неверный логин или пароль',
+  [ERROR_CODES.USER_NOT_FOUND]: 'Неверный логин или пароль',
   [ERROR_CODES.GROUP_NOT_FOUND]: 'Группа не существует',
   [ERROR_CODES.GROUP_ALREADY_EXISTS]: 'Группа уже существует',
   [ERROR_CODES.CATEGORY_NOT_FOUND]: 'Категория не существует',

@@ -28,6 +28,8 @@ export class PrismaExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const error = prismaCodeToError(exception);
 
+    console.log(exception, 'exception');
+
     if (!error) {
       response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
