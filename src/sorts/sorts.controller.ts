@@ -1,6 +1,5 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Patch,
@@ -9,7 +8,6 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Req,
-  Query,
 } from '@nestjs/common';
 import { SortsService } from './sorts.service';
 import { Sort } from './entities/sort.entity';
@@ -35,6 +33,7 @@ export class SortsController {
     return new Sort(sort);
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post(':id')
   async cancel(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
@@ -42,6 +41,7 @@ export class SortsController {
     return { sort: id };
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':id')
   async remove(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);

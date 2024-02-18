@@ -13,6 +13,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthGuard } from './auth/auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { CategoriesModule } from './categories/categories.module';
+import { PlantationsModule } from './plantations/plantations.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CategoriesModule } from './categories/categories.module';
     AuthModule,
     PrismaModule,
     CategoriesModule,
+    PlantationsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [

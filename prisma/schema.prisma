@@ -2,9 +2,9 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["fullTextSearch"]
-  binaryTargets="native"
+  binaryTargets   = "native"
 }
 
 datasource db {
@@ -13,12 +13,12 @@ datasource db {
 }
 
 model Group {
-  id        Int      @default(autoincrement()) @id
-  name      String
+  id         Int        @id @default(autoincrement())
+  name       String
   categories Category[] @relation("group")
 
   // approved by admin
-  deleted   Boolean @default(false)
+  deleted   Boolean   @default(false)
   // if not null - deleted by user(requires an approve by admin)
   deletedAt DateTime?
   deletedBy Int?
@@ -28,32 +28,32 @@ model Group {
 }
 
 model Category {
-  id        Int      @default(autoincrement()) @id
-  name      String
+  id   Int    @id @default(autoincrement())
+  name String
 
-  groupId   Int
-  group     Group @relation("group", fields: [groupId], references: [id])
-  sorts     Sort[] @relation("category")
+  groupId Int
+  group   Group  @relation("group", fields: [groupId], references: [id])
+  sorts   Sort[] @relation("category")
 
   // approved by admin
-  deleted   Boolean @default(false)
+  deleted   Boolean   @default(false)
   // if not null - deleted by user(requires an approve by admin)
   deletedAt DateTime?
   deletedBy Int?
- 
+
   @@unique([groupId, name, deleted], name: "existing_category")
   @@map("categories")
 }
 
 model Sort {
-  id        Int      @default(autoincrement()) @id
-  name      String
+  id   Int    @id @default(autoincrement())
+  name String
 
-  categoryId   Int
-  category     Category @relation("category", fields: [categoryId], references: [id])
+  categoryId Int
+  category   Category @relation("category", fields: [categoryId], references: [id])
 
   // approved by admin
-  deleted   Boolean @default(false)
+  deleted   Boolean   @default(false)
   // if not null - deleted by user(requires an approve by admin)
   deletedAt DateTime?
   deletedBy Int?
@@ -63,12 +63,134 @@ model Sort {
 }
 
 model User {
-  id        Int      @default(autoincrement()) @id
-  email     String
-  password  String
-  role      String
-  
+  id       Int    @id @default(autoincrement())
+  email    String
+  password String
+  role     String
+
   @@unique(email)
   @@map("users")
 }
 
+enum ChecksDeliveryMethod {
+  PERSONALLY
+  SERVIENTREGA
+}
+
+enum TermsOfPayment {
+  PREPAID
+  PAIDUPONACTUAL
+  POSTPAID
+}
+
+model Plantation {
+  id             Int                  @id @default(autoincrement())
+  name           String
+  country        String
+  comments       String?
+  deliveryMethod ChecksDeliveryMethod @default(PERSONALLY)
+
+  termsOfPayment TermsOfPayment @default(PAIDUPONACTUAL)
+  postpaidCredit Float?
+  postpaidDays   Int?
+
+  legalEntities PlantationLegalEntity[] @relation("legalEntities")
+  contacts      PlantationContacts[]    @relation("contacts")
+
+  transferDetails PlantationTransferDetails[] @relation("plantationTransferDetails")
+  checks          PlantationChecks[]          @relation("plantationChecks")
+
+  // approved by admin
+  deleted   Boolean   @default(false)
+  // if not null - deleted by user(requires an approve by admin)
+  deletedAt DateTime?
+  deletedBy Int?
+
+  @@unique([name, country, deleted], name: "existing_plantation")
+  @@map("plantations")
+}
+
+model PlantationLegalEntity {
+  id            Int    @id @default(autoincrement())
+  name          String
+  code          String
+  legalAddress  String
+  actualAddress String
+
+  transferDetails PlantationTransferDetails[] @relation("plantationLegalEntityTransferDetails")
+  checks          PlantationChecks[]          @relation("plantationLegalEntityChecks")
+
+  plantationId Int
+  plantation   Plantation @relation("legalEntities", fields: [plantationId], references: [id])
+
+  @@unique([name, plantationId], name: "existing_plantation_legal_entities")
+  @@map("plantation_legal_entities")
+}
+
+enum PlantationDepartmanet {
+  FINANCIAL
+  SALES
+}
+
+model PlantationContacts {
+  id         Int                   @id @default(autoincrement())
+  name       String
+  email      String
+  whatsapp   String
+  telegram   String
+  skype      String
+  position   String
+  department PlantationDepartmanet
+
+  plantationId Int
+  plantation   Plantation @relation("contacts", fields: [plantationId], references: [id])
+
+  @@unique([plantationId, department, email], name: "plantation_department_contact")
+  @@map("plantation_contacts")
+}
+
+model PlantationTransferDetails {
+  id        Int     @id @default(autoincrement())
+  name      String
+  favourite Boolean @default(false)
+
+  beneficiary        String
+  beneficiaryAddress String
+  documentPath       String?
+
+  bank              String
+  bankAddress       String
+  bankAccountNumber String
+  bankAccountType   String
+  bankSwift         String
+
+  correspondentBank              String?
+  correspondentBankAddress       String?
+  correspondentBankAccountNumber String?
+  correspondentBankSwift         String?
+
+  plantationId Int
+  plantation   Plantation @relation("plantationTransferDetails", fields: [plantationId], references: [id])
+
+  plantationLegalEntityId Int
+  legalEntity             PlantationLegalEntity @relation("plantationLegalEntityTransferDetails", fields: [plantationLegalEntityId], references: [id])
+
+  @@map("plantation_transfer_details")
+}
+
+model PlantationChecks {
+  id           Int     @id @default(autoincrement())
+  name         String
+  beneficiary  String
+  documentPath String?
+
+  favourite Boolean @default(false)
+
+  plantationId Int
+  plantation   Plantation @relation("plantationChecks", fields: [plantationId], references: [id])
+
+  plantationLegalEntityId Int
+  legalEntity             PlantationLegalEntity @relation("plantationLegalEntityChecks", fields: [plantationLegalEntityId], references: [id])
+
+  @@map("plantation_checks")
+}

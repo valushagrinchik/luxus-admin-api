@@ -73,6 +73,7 @@ export class GroupsController {
     return new Group(group);
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post(':id')
   async cancel(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
@@ -80,6 +81,7 @@ export class GroupsController {
     return { group: id };
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':id')
   async remove(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);

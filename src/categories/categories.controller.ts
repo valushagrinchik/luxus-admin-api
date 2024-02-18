@@ -48,6 +48,7 @@ export class CategoriesController {
     return new Category(category);
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Post(':id')
   async cancel(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
@@ -55,6 +56,7 @@ export class CategoriesController {
     return { category: id };
   }
 
+  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':id')
   async remove(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
