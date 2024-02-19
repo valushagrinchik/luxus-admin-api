@@ -13,6 +13,7 @@ async function bootstrap() {
   });
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new PrismaExceptionFilter());
+  app.setGlobalPrefix('api');
   await app.listen(3001);
 }
 bootstrap();
