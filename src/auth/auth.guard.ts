@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import 'dotenv/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
