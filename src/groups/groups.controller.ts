@@ -10,6 +10,9 @@ import {
   UseInterceptors,
   Req,
   Query,
+  Logger,
+  LoggerService,
+  Inject,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -19,11 +22,16 @@ import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 
 @Controller('groups')
 export class GroupsController {
-  constructor(private readonly groupsService: GroupsService) {}
+  constructor(
+    @Inject(Logger) private readonly logger: LoggerService,
+    private readonly groupsService: GroupsService,
+  ) {}
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
   async findAll(): Promise<Group[]> {
+    this.logger.log('Fetching all groups...');
+
     const groups = await this.groupsService.findAll();
     return groups.map((group) => new Group(group));
   }

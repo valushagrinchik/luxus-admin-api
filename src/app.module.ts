@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Logger, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SortsModule } from './sorts/sorts.module';
@@ -30,6 +30,7 @@ import { PlantationsModule } from './plantations/plantations.module';
   ],
   controllers: [AppController, AuthController],
   providers: [
+    Logger,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
