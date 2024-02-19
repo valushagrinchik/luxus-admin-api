@@ -5,16 +5,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
-
-import * as dotenv from 'dotenv';
-dotenv.config();
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private configService: ConfigService,
     private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
@@ -30,6 +29,7 @@ export class AuthService {
     }
 
     const match = bcrypt.compareSync(pass, user.password);
+
     if (!match) {
       throw new UnauthorizedException({
         statusCode: HttpStatus.BAD_REQUEST,
@@ -39,10 +39,13 @@ export class AuthService {
     }
 
     const payload = { sub: user.id, name: user.email, role: user.role };
+
     return {
       id: user.id,
       email: user.email,
-      access_token: await this.jwtService.signAsync(payload),
+      access_token: await this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('JWT_SECRET'),
+      }),
     };
   }
 }

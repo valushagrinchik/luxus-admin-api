@@ -2,7 +2,7 @@ import { Logger, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SortsModule } from './sorts/sorts.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GroupsModule } from './groups/groups.module';
 import { UsersService } from './users/users.service';
 import { UsersModule } from './users/users.module';
@@ -14,6 +14,7 @@ import { AuthGuard } from './auth/auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { CategoriesModule } from './categories/categories.module';
 import { PlantationsModule } from './plantations/plantations.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PlantationsModule } from './plantations/plantations.module';
     AppService,
     UsersService,
     AuthService,
+    JwtService,
   ],
 })
 export class AppModule {}
