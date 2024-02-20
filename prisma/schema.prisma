@@ -149,20 +149,25 @@ model PlantationContacts {
   @@map("plantation_contacts")
 }
 
+enum BankAccountType {
+  CURRENT
+  SAVINGS
+}
+
 model PlantationTransferDetails {
   id        Int     @id @default(autoincrement())
   name      String
   favourite Boolean @default(false)
 
   beneficiary        String
-  beneficiaryAddress String
+  beneficiaryAddress String?
   documentPath       String?
 
   bank              String
-  bankAddress       String
+  bankAddress       String?
   bankAccountNumber String
-  bankAccountType   String
-  bankSwift         String
+  bankAccountType   BankAccountType
+  bankSwift         String?
 
   correspondentBank              String?
   correspondentBankAddress       String?

@@ -3,17 +3,16 @@ import { IsNotEmpty } from 'class-validator';
 class TransferDetails {
   @IsNotEmpty()
   name: string;
+  @IsNotEmpty()
   favourite: boolean;
 
   @IsNotEmpty()
   beneficiary: string;
-  @IsNotEmpty()
   beneficiaryAddress: string;
   documentPath: string;
 
   @IsNotEmpty()
   bank: string;
-  @IsNotEmpty()
   bankAddress: string;
   @IsNotEmpty()
   bankAccountNumber: string;
@@ -30,10 +29,11 @@ class TransferDetails {
 class PlantationChecks {
   @IsNotEmpty()
   name: string;
+  @IsNotEmpty()
   favourite: boolean;
   @IsNotEmpty()
   beneficiary: string;
-  documentPath?: string;
+  documentPath: string;
 }
 
 class LegalEntity {
@@ -57,8 +57,11 @@ class Contact {
   name: string;
   @IsNotEmpty()
   email: string;
+  @IsNotEmpty()
   whatsapp: string;
+  @IsNotEmpty()
   telegram: string;
+  @IsNotEmpty()
   skype: string;
   @IsNotEmpty()
   position: string;

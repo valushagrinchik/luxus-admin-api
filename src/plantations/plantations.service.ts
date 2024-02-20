@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
 import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 import {
+  BankAccountType,
   ChecksDeliveryMethod,
   PlantationDepartmanet,
   Prisma,
@@ -82,7 +83,8 @@ export class PlantationsService {
                     bank: transfer.bank,
                     bankAddress: transfer.bankAddress,
                     bankAccountNumber: transfer.bankAccountNumber,
-                    bankAccountType: transfer.bankAccountType,
+                    bankAccountType:
+                      transfer.bankAccountType as BankAccountType,
                     bankSwift: transfer.bankSwift,
                     correspondentBank: transfer.correspondentBank,
                     correspondentBankAddress: transfer.correspondentBankAddress,
@@ -263,7 +265,8 @@ export class PlantationsService {
                     bank: transfer.bank,
                     bankAddress: transfer.bankAddress,
                     bankAccountNumber: transfer.bankAccountNumber,
-                    bankAccountType: transfer.bankAccountType,
+                    bankAccountType:
+                      transfer.bankAccountType as BankAccountType,
                     bankSwift: transfer.bankSwift,
                     correspondentBank: transfer.correspondentBank,
                     correspondentBankAddress: transfer.correspondentBankAddress,
