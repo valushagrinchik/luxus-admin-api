@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { CreatePlantationDto } from './dto/create-plantation.dto';
 import { UpdatePlantationDto } from './dto/update-plantation.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -130,8 +135,8 @@ export class PlantationsService {
     });
   }
 
-  findOne(id: number) {
-    return this.prisma.plantation.findUnique({
+  async findOne(id: number) {
+    const plantation = await this.prisma.plantation.findUnique({
       where: { id, deleted: false },
       include: {
         legalEntities: true,
@@ -140,6 +145,14 @@ export class PlantationsService {
         checks: true,
       },
     });
+    if (!plantation) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        error: ERROR_CODES.PLANTATION_NOT_FOUND,
+        message: [ERROR_MESSAGES[ERROR_CODES.PLANTATION_NOT_FOUND]],
+      });
+    }
+    return plantation;
   }
 
   buildSearchParams = (
