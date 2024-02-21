@@ -12,6 +12,8 @@ import {
   TermsOfPayment,
 } from '@prisma/client';
 import { FilterPlantationDto } from './dto/filter-plantation.dto';
+import { validate as uuidValidate } from 'uuid';
+import { contains } from 'class-validator';
 
 @Injectable()
 export class PlantationsService {
@@ -29,8 +31,10 @@ export class PlantationsService {
           comments: data.comments,
           deliveryMethod: data.deliveryMethod as ChecksDeliveryMethod,
           termsOfPayment: data.termsOfPayment as TermsOfPayment,
-          postpaidCredit: data.postpaidCredit,
-          postpaidDays: data.postpaidDays,
+          postpaidCredit: data.postpaidCredit
+            ? +data.postpaidCredit
+            : undefined,
+          postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
 
           legalEntities: {
             createMany: {
@@ -42,9 +46,6 @@ export class PlantationsService {
               })),
             },
           },
-
-          transferDetails: {},
-          checks: {},
 
           contacts: {
             createMany: {
@@ -193,9 +194,25 @@ export class PlantationsService {
     });
   }
 
-  update(id: number, data: UpdatePlantationDto) {
-    return this.prisma.$transaction(async (tx) => {
-      const created = await tx.plantation.update({
+  async update(id: number, data: UpdatePlantationDto) {
+    // console.log(data, 'data');
+
+    // data.legalEntities.map((l) => {
+    //   console.log(l, 'legalEntity');
+    // });
+
+    const updatedId = await this.prisma.$transaction(async (tx) => {
+      const legalEntitiesToCreate = data.legalEntities.filter((c) =>
+        uuidValidate(c.id),
+      );
+      const legalEntitiesToUpdate = data.legalEntities.filter(
+        (c) => !uuidValidate(c.id),
+      );
+
+      const contactsToCreate = data.contacts.filter((c) => uuidValidate(c.id));
+      const contactsToUpdate = data.contacts.filter((c) => !uuidValidate(c.id));
+
+      const updated = await tx.plantation.update({
         where: {
           id,
         },
@@ -208,28 +225,45 @@ export class PlantationsService {
           comments: data.comments,
           deliveryMethod: data.deliveryMethod as ChecksDeliveryMethod,
           termsOfPayment: data.termsOfPayment as TermsOfPayment,
-          postpaidCredit: data.postpaidCredit,
-          postpaidDays: data.postpaidDays,
+          postpaidCredit: data.postpaidCredit
+            ? +data.postpaidCredit
+            : undefined,
+          postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
 
           legalEntities: {
-            deleteMany: {},
+            deleteMany: {
+              NOT: {
+                id: { in: legalEntitiesToUpdate.map((e) => +e.id) },
+              },
+            },
             createMany: {
-              data: data.legalEntities.map((legalEntity) => ({
+              data: legalEntitiesToCreate.map((legalEntity) => ({
                 name: legalEntity.name,
                 code: legalEntity.code,
                 legalAddress: legalEntity.legalAddress,
                 actualAddress: legalEntity.actualAddress,
               })),
             },
+            updateMany: legalEntitiesToUpdate.map((legalEntity) => ({
+              data: {
+                name: legalEntity.name,
+                code: legalEntity.code,
+                legalAddress: legalEntity.legalAddress,
+                actualAddress: legalEntity.actualAddress,
+              },
+              where: {
+                id: +legalEntity.id,
+              },
+            })),
           },
-
-          transferDetails: {},
-          checks: {},
-
           contacts: {
-            deleteMany: {},
+            deleteMany: {
+              NOT: {
+                id: { in: contactsToUpdate.map((e) => +e.id) },
+              },
+            },
             createMany: {
-              data: data.contacts.map((contact) => ({
+              data: contactsToCreate.map((contact) => ({
                 name: contact.name,
                 email: contact.email,
                 whatsapp: contact.whatsapp,
@@ -239,29 +273,62 @@ export class PlantationsService {
                 department: contact.department as PlantationDepartmanet,
               })),
             },
+            updateMany: contactsToUpdate.map((contact) => ({
+              data: {
+                name: contact.name,
+                email: contact.email,
+                whatsapp: contact.whatsapp,
+                telegram: contact.telegram,
+                skype: contact.skype,
+                position: contact.position,
+                department: contact.department as PlantationDepartmanet,
+              },
+              where: {
+                id: +contact.id,
+              },
+            })),
           },
         },
       });
 
-      const updateLegalEntityPromises = created.legalEntities.map(
+      const updateLegalEntityPromises = updated.legalEntities.map(
         (createdLegalEntity) => {
           const legalEntityData = data.legalEntities.find(
             (entity) => entity.name === createdLegalEntity.name,
           );
+
+          const transferDetailsToCreate =
+            legalEntityData.transferDetails.filter((c) => uuidValidate(c.id));
+          const transferDetailsToUpdate =
+            legalEntityData.transferDetails.filter((c) => !uuidValidate(c.id));
+
+          const checksToCreate = legalEntityData.checks.filter((c) =>
+            uuidValidate(c.id),
+          );
+          const checksToUpdate = legalEntityData.checks.filter(
+            (c) => !uuidValidate(c.id),
+          );
+
+          // console.log(checksToCreate, 'checksToCreate');
+
           return tx.plantationLegalEntity.update({
             where: {
               id: createdLegalEntity.id,
             },
             data: {
               transferDetails: {
-                deleteMany: {},
+                deleteMany: {
+                  NOT: {
+                    id: { in: transferDetailsToUpdate.map((e) => +e.id) },
+                  },
+                },
                 createMany: {
-                  data: legalEntityData.transferDetails.map((transfer) => ({
+                  data: transferDetailsToCreate.map((transfer) => ({
                     name: transfer.name,
                     favourite: transfer.favourite,
                     beneficiary: transfer.beneficiary,
                     beneficiaryAddress: transfer.beneficiaryAddress,
-                    documentPath: transfer.documentPath,
+                    // documentPath: transfer.documentPath,
                     bank: transfer.bank,
                     bankAddress: transfer.bankAddress,
                     bankAccountNumber: transfer.bankAccountNumber,
@@ -273,21 +340,61 @@ export class PlantationsService {
                     correspondentBankAccountNumber:
                       transfer.correspondentBankAccountNumber,
                     correspondentBankSwift: transfer.correspondentBankSwift,
-                    plantationId: created.id,
+                    plantationId: updated.id,
                   })),
                 },
+                updateMany: transferDetailsToUpdate.map((transfer) => ({
+                  data: {
+                    name: transfer.name,
+                    favourite: transfer.favourite,
+                    beneficiary: transfer.beneficiary,
+                    beneficiaryAddress: transfer.beneficiaryAddress,
+                    // documentPath: transfer.documentPath,
+                    bank: transfer.bank,
+                    bankAddress: transfer.bankAddress,
+                    bankAccountNumber: transfer.bankAccountNumber,
+                    bankAccountType:
+                      transfer.bankAccountType as BankAccountType,
+                    bankSwift: transfer.bankSwift,
+                    correspondentBank: transfer.correspondentBank,
+                    correspondentBankAddress: transfer.correspondentBankAddress,
+                    correspondentBankAccountNumber:
+                      transfer.correspondentBankAccountNumber,
+                    correspondentBankSwift: transfer.correspondentBankSwift,
+                    plantationId: updated.id,
+                  },
+                  where: {
+                    id: +transfer.id,
+                  },
+                })),
               },
               checks: {
-                deleteMany: {},
+                deleteMany: {
+                  NOT: {
+                    id: { in: checksToUpdate.map((e) => +e.id) },
+                  },
+                },
                 createMany: {
-                  data: legalEntityData.checks.map((check) => ({
+                  data: checksToCreate.map((check) => ({
                     name: check.name,
                     beneficiary: check.beneficiary,
-                    documentPath: check.documentPath,
+                    // documentPath: check.documentPath,
                     favourite: check.favourite,
-                    plantationId: created.id,
+                    plantationId: updated.id,
                   })),
                 },
+                updateMany: checksToUpdate.map((check) => ({
+                  data: {
+                    name: check.name,
+                    beneficiary: check.beneficiary,
+                    // documentPath: check.documentPath,
+                    favourite: check.favourite,
+                    plantationId: updated.id,
+                  },
+                  where: {
+                    id: +check.id,
+                  },
+                })),
               },
             },
           });
@@ -296,8 +403,10 @@ export class PlantationsService {
 
       await Promise.allSettled(updateLegalEntityPromises);
 
-      return this.findOne(created.id);
+      return updated.id;
     });
+
+    return this.findOne(updatedId);
   }
 
   remove(id: number, userId: number) {

@@ -10,7 +10,6 @@ import {
   Query,
   UseInterceptors,
   ClassSerializerInterceptor,
-  ValidationPipe,
 } from '@nestjs/common';
 import { PlantationsService } from './plantations.service';
 import { CreatePlantationDto } from './dto/create-plantation.dto';
@@ -66,11 +65,12 @@ export class PlantationsController {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updatePlantationDto: UpdatePlantationDto,
   ) {
-    return this.plantationsService.update(+id, updatePlantationDto);
+    const res = await this.plantationsService.update(+id, updatePlantationDto);
+    return res;
   }
 
   @UseInterceptors(ClassSerializerInterceptor)

@@ -178,7 +178,7 @@ model PlantationTransferDetails {
   plantation   Plantation @relation("plantationTransferDetails", fields: [plantationId], references: [id])
 
   plantationLegalEntityId Int
-  legalEntity             PlantationLegalEntity @relation("plantationLegalEntityTransferDetails", fields: [plantationLegalEntityId], references: [id])
+  legalEntity             PlantationLegalEntity @relation("plantationLegalEntityTransferDetails", fields: [plantationLegalEntityId], references: [id], onDelete: Cascade)
 
   @@map("plantation_transfer_details")
 }
@@ -195,7 +195,7 @@ model PlantationChecks {
   plantation   Plantation @relation("plantationChecks", fields: [plantationId], references: [id])
 
   plantationLegalEntityId Int
-  legalEntity             PlantationLegalEntity @relation("plantationLegalEntityChecks", fields: [plantationLegalEntityId], references: [id])
+  legalEntity             PlantationLegalEntity @relation("plantationLegalEntityChecks", fields: [plantationLegalEntityId], references: [id], onDelete: Cascade)
 
   @@map("plantation_checks")
 }

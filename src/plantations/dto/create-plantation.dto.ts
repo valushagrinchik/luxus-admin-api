@@ -1,6 +1,6 @@
 import { IsNotEmpty } from 'class-validator';
 
-class TransferDetails {
+export class TransferDetails {
   @IsNotEmpty()
   name: string;
   @IsNotEmpty()
@@ -9,7 +9,7 @@ class TransferDetails {
   @IsNotEmpty()
   beneficiary: string;
   beneficiaryAddress: string;
-  documentPath: string;
+  documentPath: any;
 
   @IsNotEmpty()
   bank: string;
@@ -26,17 +26,17 @@ class TransferDetails {
   correspondentBankSwift: string;
 }
 
-class PlantationChecks {
+export class PlantationChecks {
   @IsNotEmpty()
   name: string;
   @IsNotEmpty()
   favourite: boolean;
   @IsNotEmpty()
   beneficiary: string;
-  documentPath: string;
+  documentPath: any;
 }
 
-class LegalEntity {
+export class LegalEntity {
   @IsNotEmpty()
   name: string;
   @IsNotEmpty()
@@ -52,7 +52,7 @@ class LegalEntity {
   checks: PlantationChecks[];
 }
 
-class Contact {
+export class Contact {
   @IsNotEmpty()
   name: string;
   @IsNotEmpty()
@@ -81,8 +81,8 @@ export class CreatePlantationDto {
   deliveryMethod: string;
   termsOfPayment: string;
 
-  postpaidCredit: number;
-  postpaidDays: number;
+  postpaidCredit: string;
+  postpaidDays: string;
 
   @IsNotEmpty()
   legalEntities: LegalEntity[];
