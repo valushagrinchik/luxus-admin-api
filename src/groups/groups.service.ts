@@ -1,8 +1,14 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Category, Group, Prisma, Sort } from '@prisma/client';
 import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
 import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
+import { Workbook } from 'exceljs';
+import { orderBy } from 'lodash';
+
+type FullGroupsArray = (Group & {
+  categories: (Category & { sorts: Sort[] })[];
+})[];
 
 @Injectable()
 export class GroupsService {
@@ -104,18 +110,34 @@ export class GroupsService {
   async search(filter?: {
     search: string;
     type: string;
-    offset: number;
-    limit: number;
-  }) {
-    const params: Prisma.GroupFindManyArgs = this.buildSearchParams(filter);
-    return this.prisma.group.findMany({
-      ...params,
+    offset?: number;
+    limit?: number;
+  }): Promise<FullGroupsArray> {
+    const res = await this.prisma.group.findMany({
+      ...this.buildSearchParams(filter),
       orderBy: {
         name: 'asc',
       },
-      skip: +filter.offset,
-      take: +filter.limit,
+      ...(filter.offset ? { skip: +filter.offset } : {}),
+      ...(filter.limit ? { take: +filter.limit } : {}),
     });
+    return orderBy(res, [(group) => group.name.toLowerCase()], ['asc']).map(
+      (group) => ({
+        ...group,
+        categories: orderBy(
+          group.categories,
+          [(cat) => cat.name.toLowerCase()],
+          ['asc'],
+        ).map((cat) => ({
+          ...cat,
+          sorts: orderBy(
+            cat.sorts,
+            [(sort) => sort.name.toLowerCase()],
+            ['asc'],
+          ),
+        })),
+      }),
+    );
   }
 
   async create(data: Prisma.GroupCreateInput) {
@@ -194,5 +216,49 @@ export class GroupsService {
         id,
       },
     });
+  }
+
+  async excel(filter?: { search: string; type: string }) {
+    const groups = await this.search(filter);
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet('Sorts');
+    worksheet.columns = [
+      {
+        header: 'Group',
+        key: 'group',
+        width: 32,
+      },
+      { header: 'Category', key: 'category', width: 32 },
+      { header: 'Sort', key: 'sort', width: 32 },
+    ];
+    worksheet.getCell('A1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('B1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('C1').font = {
+      size: 16,
+      bold: true,
+    };
+    const data: { group: string; category: string; sort: string }[] = [];
+    for (const group of groups) {
+      data.push({ group: group.name, category: '', sort: '' });
+      for (const category of group.categories) {
+        data.push({ group: '', category: category.name, sort: '' });
+        for (const sort of category.sorts) {
+          data.push({ group: '', category: '', sort: sort.name });
+        }
+      }
+    }
+
+    data.forEach((val) => {
+      worksheet.addRow(val);
+    });
+    // await workbook.xlsx.writeFile('./public/Profile.xlsx');
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
   }
 }

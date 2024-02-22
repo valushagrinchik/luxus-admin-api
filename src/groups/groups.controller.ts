@@ -13,12 +13,14 @@ import {
   Logger,
   LoggerService,
   Inject,
+  StreamableFile,
 } from '@nestjs/common';
 import { GroupsService } from './groups.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { Group } from './entities/group.entity';
 import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
+import { Readable } from 'stream';
 
 @Controller('groups')
 export class GroupsController {
@@ -34,6 +36,26 @@ export class GroupsController {
 
     const groups = await this.groupsService.findAll();
     return groups.map((group) => new Group(group));
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('excel')
+  async excel(
+    @Query()
+    search: {
+      search: string;
+      type: string;
+    },
+  ): Promise<StreamableFile> {
+    const buffer = await this.groupsService.excel(search);
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+    //   res.set({
+    //     'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    //     'Content-Length': buffer.length,
+    // });
+    return new StreamableFile(stream);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
