@@ -51,10 +51,6 @@ export class GroupsController {
     const stream = new Readable();
     stream.push(buffer);
     stream.push(null);
-    //   res.set({
-    //     'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    //     'Content-Length': buffer.length,
-    // });
     return new StreamableFile(stream);
   }
 

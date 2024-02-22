@@ -10,6 +10,7 @@ import {
   Query,
   UseInterceptors,
   ClassSerializerInterceptor,
+  StreamableFile,
 } from '@nestjs/common';
 import { PlantationsService } from './plantations.service';
 import { CreatePlantationDto } from './dto/create-plantation.dto';
@@ -17,6 +18,7 @@ import { UpdatePlantationDto } from './dto/update-plantation.dto';
 import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 import { Plantation } from './entities/plantation.entity';
 import { FilterPlantationDto } from './dto/filter-plantation.dto';
+import { Readable } from 'stream';
 
 @Controller('plantations')
 export class PlantationsController {
@@ -32,6 +34,19 @@ export class PlantationsController {
   @Get()
   findAll() {
     return this.plantationsService.findAll();
+  }
+
+  @UseInterceptors(ClassSerializerInterceptor)
+  @Get('excel')
+  async excel(
+    @Query()
+    search: FilterPlantationDto,
+  ): Promise<StreamableFile> {
+    const buffer = await this.plantationsService.excel(search);
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+    return new StreamableFile(stream);
   }
 
   @UseInterceptors(ClassSerializerInterceptor)

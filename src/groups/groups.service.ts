@@ -221,15 +221,15 @@ export class GroupsService {
   async excel(filter?: { search: string; type: string }) {
     const groups = await this.search(filter);
     const workbook = new Workbook();
-    const worksheet = workbook.addWorksheet('Sorts');
+    const worksheet = workbook.addWorksheet('Variedades');
     worksheet.columns = [
       {
-        header: 'Group',
+        header: 'Grupo',
         key: 'group',
         width: 32,
       },
-      { header: 'Category', key: 'category', width: 32 },
-      { header: 'Sort', key: 'sort', width: 32 },
+      { header: 'Categoria', key: 'category', width: 32 },
+      { header: 'Variedad', key: 'sort', width: 32 },
     ];
     worksheet.getCell('A1').font = {
       size: 16,

@@ -12,115 +12,127 @@ import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 import {
   BankAccountType,
   ChecksDeliveryMethod,
+  Plantation,
   PlantationDepartmanet,
+  PlantationLegalEntity,
   Prisma,
   TermsOfPayment,
 } from '@prisma/client';
 import { FilterPlantationDto } from './dto/filter-plantation.dto';
 import { validate as uuidValidate } from 'uuid';
-import { contains } from 'class-validator';
+import { Workbook } from 'exceljs';
 
+type FullPlantationsArray = (Plantation & {
+  legalEntities: PlantationLegalEntity[];
+})[];
 @Injectable()
 export class PlantationsService {
   constructor(private prisma: PrismaService) {}
 
-  create(data: CreatePlantationDto) {
-    return this.prisma.$transaction(async (tx) => {
-      const created = await tx.plantation.create({
-        include: {
-          legalEntities: true,
-        },
-        data: {
-          name: data.name,
-          country: data.country,
-          comments: data.comments,
-          deliveryMethod: data.deliveryMethod as ChecksDeliveryMethod,
-          termsOfPayment: data.termsOfPayment as TermsOfPayment,
-          postpaidCredit: data.postpaidCredit
-            ? +data.postpaidCredit
-            : undefined,
-          postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
+  async create(data: CreatePlantationDto) {
+    try {
+      const createdId = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.plantation.create({
+          include: {
+            legalEntities: true,
+          },
+          data: {
+            name: data.name,
+            country: data.country,
+            comments: data.comments,
+            deliveryMethod: data.deliveryMethod as ChecksDeliveryMethod,
+            termsOfPayment: data.termsOfPayment as TermsOfPayment,
+            postpaidCredit: data.postpaidCredit
+              ? +data.postpaidCredit
+              : undefined,
+            postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
 
-          legalEntities: {
-            createMany: {
-              data: data.legalEntities.map((legalEntity) => ({
-                name: legalEntity.name,
-                code: legalEntity.code,
-                legalAddress: legalEntity.legalAddress,
-                actualAddress: legalEntity.actualAddress,
-              })),
+            legalEntities: {
+              createMany: {
+                data: data.legalEntities.map((legalEntity) => ({
+                  name: legalEntity.name,
+                  code: legalEntity.code,
+                  legalAddress: legalEntity.legalAddress,
+                  actualAddress: legalEntity.actualAddress,
+                })),
+              },
+            },
+
+            contacts: {
+              createMany: {
+                data: data.contacts.map((contact) => ({
+                  name: contact.name,
+                  email: contact.email,
+                  whatsapp: contact.whatsapp,
+                  telegram: contact.telegram,
+                  skype: contact.skype,
+                  position: contact.position,
+                  department: contact.department as PlantationDepartmanet,
+                })),
+              },
             },
           },
+        });
 
-          contacts: {
-            createMany: {
-              data: data.contacts.map((contact) => ({
-                name: contact.name,
-                email: contact.email,
-                whatsapp: contact.whatsapp,
-                telegram: contact.telegram,
-                skype: contact.skype,
-                position: contact.position,
-                department: contact.department as PlantationDepartmanet,
-              })),
-            },
+        const updateLegalEntityPromises = created.legalEntities.map(
+          (createdLegalEntity) => {
+            const legalEntityData = data.legalEntities.find(
+              (entity) => entity.name === createdLegalEntity.name,
+            );
+            return tx.plantationLegalEntity.update({
+              where: {
+                id: createdLegalEntity.id,
+              },
+              data: {
+                transferDetails: {
+                  createMany: {
+                    data: legalEntityData.transferDetails.map((transfer) => ({
+                      name: transfer.name,
+                      favourite: transfer.favourite,
+                      beneficiary: transfer.beneficiary,
+                      beneficiaryAddress: transfer.beneficiaryAddress,
+                      documentPath: transfer.documentPath,
+                      bank: transfer.bank,
+                      bankAddress: transfer.bankAddress,
+                      bankAccountNumber: transfer.bankAccountNumber,
+                      bankAccountType:
+                        transfer.bankAccountType as BankAccountType,
+                      bankSwift: transfer.bankSwift,
+                      correspondentBank: transfer.correspondentBank,
+                      correspondentBankAddress:
+                        transfer.correspondentBankAddress,
+                      correspondentBankAccountNumber:
+                        transfer.correspondentBankAccountNumber,
+                      correspondentBankSwift: transfer.correspondentBankSwift,
+                      plantationId: created.id,
+                    })),
+                  },
+                },
+                checks: {
+                  createMany: {
+                    data: legalEntityData.checks.map((check) => ({
+                      name: check.name,
+                      beneficiary: check.beneficiary,
+                      documentPath: check.documentPath,
+                      favourite: check.favourite,
+                      plantationId: created.id,
+                    })),
+                  },
+                },
+              },
+            });
           },
-        },
+        );
+
+        await Promise.allSettled(updateLegalEntityPromises);
+
+        return created.id;
       });
-
-      const updateLegalEntityPromises = created.legalEntities.map(
-        (createdLegalEntity) => {
-          const legalEntityData = data.legalEntities.find(
-            (entity) => entity.name === createdLegalEntity.name,
-          );
-          return tx.plantationLegalEntity.update({
-            where: {
-              id: createdLegalEntity.id,
-            },
-            data: {
-              transferDetails: {
-                createMany: {
-                  data: legalEntityData.transferDetails.map((transfer) => ({
-                    name: transfer.name,
-                    favourite: transfer.favourite,
-                    beneficiary: transfer.beneficiary,
-                    beneficiaryAddress: transfer.beneficiaryAddress,
-                    documentPath: transfer.documentPath,
-                    bank: transfer.bank,
-                    bankAddress: transfer.bankAddress,
-                    bankAccountNumber: transfer.bankAccountNumber,
-                    bankAccountType:
-                      transfer.bankAccountType as BankAccountType,
-                    bankSwift: transfer.bankSwift,
-                    correspondentBank: transfer.correspondentBank,
-                    correspondentBankAddress: transfer.correspondentBankAddress,
-                    correspondentBankAccountNumber:
-                      transfer.correspondentBankAccountNumber,
-                    correspondentBankSwift: transfer.correspondentBankSwift,
-                    plantationId: created.id,
-                  })),
-                },
-              },
-              checks: {
-                createMany: {
-                  data: legalEntityData.checks.map((check) => ({
-                    name: check.name,
-                    beneficiary: check.beneficiary,
-                    documentPath: check.documentPath,
-                    favourite: check.favourite,
-                    plantationId: created.id,
-                  })),
-                },
-              },
-            },
-          });
-        },
-      );
-
-      await Promise.allSettled(updateLegalEntityPromises);
-
-      return this.findOne(created.id);
-    });
+      return this.findOne(createdId);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   findAll() {
@@ -191,235 +203,241 @@ export class PlantationsService {
 
   async search(
     filter: FilterPlantationDto & {
-      offset: number;
-      limit: number;
+      offset?: number;
+      limit?: number;
     },
-  ) {
-    const params: Prisma.PlantationFindManyArgs =
-      this.buildSearchParams(filter);
-    return this.prisma.plantation.findMany({
-      ...params,
+  ): Promise<FullPlantationsArray> {
+    const response = await this.prisma.plantation.findMany({
+      ...this.buildSearchParams(filter),
       orderBy: {
         name: 'asc',
       },
-      skip: +filter.offset,
-      take: +filter.limit,
+      ...(filter.offset ? { skip: +filter.offset } : {}),
+      ...(filter.limit ? { take: +filter.limit } : {}),
     });
+    return response as FullPlantationsArray;
   }
 
   async update(id: number, data: UpdatePlantationDto) {
-    // console.log(data, 'data');
+    try {
+      const updatedId = await this.prisma.$transaction(async (tx) => {
+        const legalEntitiesToCreate = data.legalEntities.filter((c) =>
+          uuidValidate(c.id),
+        );
+        const legalEntitiesToUpdate = data.legalEntities.filter(
+          (c) => !uuidValidate(c.id),
+        );
 
-    // data.legalEntities.map((l) => {
-    //   console.log(l, 'legalEntity');
-    // });
+        const contactsToCreate = data.contacts.filter((c) =>
+          uuidValidate(c.id),
+        );
+        const contactsToUpdate = data.contacts.filter(
+          (c) => !uuidValidate(c.id),
+        );
 
-    const updatedId = await this.prisma.$transaction(async (tx) => {
-      const legalEntitiesToCreate = data.legalEntities.filter((c) =>
-        uuidValidate(c.id),
-      );
-      const legalEntitiesToUpdate = data.legalEntities.filter(
-        (c) => !uuidValidate(c.id),
-      );
+        const updated = await tx.plantation.update({
+          where: {
+            id,
+          },
+          include: {
+            legalEntities: true,
+          },
+          data: {
+            name: data.name,
+            country: data.country,
+            comments: data.comments,
+            deliveryMethod: data.deliveryMethod as ChecksDeliveryMethod,
+            termsOfPayment: data.termsOfPayment as TermsOfPayment,
+            postpaidCredit: data.postpaidCredit
+              ? +data.postpaidCredit
+              : undefined,
+            postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
 
-      const contactsToCreate = data.contacts.filter((c) => uuidValidate(c.id));
-      const contactsToUpdate = data.contacts.filter((c) => !uuidValidate(c.id));
-
-      const updated = await tx.plantation.update({
-        where: {
-          id,
-        },
-        include: {
-          legalEntities: true,
-        },
-        data: {
-          name: data.name,
-          country: data.country,
-          comments: data.comments,
-          deliveryMethod: data.deliveryMethod as ChecksDeliveryMethod,
-          termsOfPayment: data.termsOfPayment as TermsOfPayment,
-          postpaidCredit: data.postpaidCredit
-            ? +data.postpaidCredit
-            : undefined,
-          postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
-
-          legalEntities: {
-            deleteMany: {
-              NOT: {
-                id: { in: legalEntitiesToUpdate.map((e) => +e.id) },
+            legalEntities: {
+              deleteMany: {
+                NOT: {
+                  id: { in: legalEntitiesToUpdate.map((e) => +e.id) },
+                },
               },
-            },
-            createMany: {
-              data: legalEntitiesToCreate.map((legalEntity) => ({
-                name: legalEntity.name,
-                code: legalEntity.code,
-                legalAddress: legalEntity.legalAddress,
-                actualAddress: legalEntity.actualAddress,
+              createMany: {
+                data: legalEntitiesToCreate.map((legalEntity) => ({
+                  name: legalEntity.name,
+                  code: legalEntity.code,
+                  legalAddress: legalEntity.legalAddress,
+                  actualAddress: legalEntity.actualAddress,
+                })),
+              },
+              updateMany: legalEntitiesToUpdate.map((legalEntity) => ({
+                data: {
+                  name: legalEntity.name,
+                  code: legalEntity.code,
+                  legalAddress: legalEntity.legalAddress,
+                  actualAddress: legalEntity.actualAddress,
+                },
+                where: {
+                  id: +legalEntity.id,
+                },
               })),
             },
-            updateMany: legalEntitiesToUpdate.map((legalEntity) => ({
-              data: {
-                name: legalEntity.name,
-                code: legalEntity.code,
-                legalAddress: legalEntity.legalAddress,
-                actualAddress: legalEntity.actualAddress,
+            contacts: {
+              deleteMany: {
+                NOT: {
+                  id: { in: contactsToUpdate.map((e) => +e.id) },
+                },
               },
-              where: {
-                id: +legalEntity.id,
+              createMany: {
+                data: contactsToCreate.map((contact) => ({
+                  name: contact.name,
+                  email: contact.email,
+                  whatsapp: contact.whatsapp,
+                  telegram: contact.telegram,
+                  skype: contact.skype,
+                  position: contact.position,
+                  department: contact.department as PlantationDepartmanet,
+                })),
               },
-            })),
-          },
-          contacts: {
-            deleteMany: {
-              NOT: {
-                id: { in: contactsToUpdate.map((e) => +e.id) },
-              },
-            },
-            createMany: {
-              data: contactsToCreate.map((contact) => ({
-                name: contact.name,
-                email: contact.email,
-                whatsapp: contact.whatsapp,
-                telegram: contact.telegram,
-                skype: contact.skype,
-                position: contact.position,
-                department: contact.department as PlantationDepartmanet,
+              updateMany: contactsToUpdate.map((contact) => ({
+                data: {
+                  name: contact.name,
+                  email: contact.email,
+                  whatsapp: contact.whatsapp,
+                  telegram: contact.telegram,
+                  skype: contact.skype,
+                  position: contact.position,
+                  department: contact.department as PlantationDepartmanet,
+                },
+                where: {
+                  id: +contact.id,
+                },
               })),
             },
-            updateMany: contactsToUpdate.map((contact) => ({
-              data: {
-                name: contact.name,
-                email: contact.email,
-                whatsapp: contact.whatsapp,
-                telegram: contact.telegram,
-                skype: contact.skype,
-                position: contact.position,
-                department: contact.department as PlantationDepartmanet,
-              },
-              where: {
-                id: +contact.id,
-              },
-            })),
           },
-        },
+        });
+
+        const updateLegalEntityPromises = updated.legalEntities.map(
+          (createdLegalEntity) => {
+            const legalEntityData = data.legalEntities.find(
+              (entity) => entity.name === createdLegalEntity.name,
+            );
+
+            const transferDetailsToCreate =
+              legalEntityData.transferDetails.filter((c) => uuidValidate(c.id));
+            const transferDetailsToUpdate =
+              legalEntityData.transferDetails.filter(
+                (c) => !uuidValidate(c.id),
+              );
+
+            const checksToCreate = legalEntityData.checks.filter((c) =>
+              uuidValidate(c.id),
+            );
+            const checksToUpdate = legalEntityData.checks.filter(
+              (c) => !uuidValidate(c.id),
+            );
+
+            // console.log(checksToCreate, 'checksToCreate');
+
+            return tx.plantationLegalEntity.update({
+              where: {
+                id: createdLegalEntity.id,
+              },
+              data: {
+                transferDetails: {
+                  deleteMany: {
+                    NOT: {
+                      id: { in: transferDetailsToUpdate.map((e) => +e.id) },
+                    },
+                  },
+                  createMany: {
+                    data: transferDetailsToCreate.map((transfer) => ({
+                      name: transfer.name,
+                      favourite: transfer.favourite,
+                      beneficiary: transfer.beneficiary,
+                      beneficiaryAddress: transfer.beneficiaryAddress,
+                      // documentPath: transfer.documentPath,
+                      bank: transfer.bank,
+                      bankAddress: transfer.bankAddress,
+                      bankAccountNumber: transfer.bankAccountNumber,
+                      bankAccountType:
+                        transfer.bankAccountType as BankAccountType,
+                      bankSwift: transfer.bankSwift,
+                      correspondentBank: transfer.correspondentBank,
+                      correspondentBankAddress:
+                        transfer.correspondentBankAddress,
+                      correspondentBankAccountNumber:
+                        transfer.correspondentBankAccountNumber,
+                      correspondentBankSwift: transfer.correspondentBankSwift,
+                      plantationId: updated.id,
+                    })),
+                  },
+                  updateMany: transferDetailsToUpdate.map((transfer) => ({
+                    data: {
+                      name: transfer.name,
+                      favourite: transfer.favourite,
+                      beneficiary: transfer.beneficiary,
+                      beneficiaryAddress: transfer.beneficiaryAddress,
+                      // documentPath: transfer.documentPath,
+                      bank: transfer.bank,
+                      bankAddress: transfer.bankAddress,
+                      bankAccountNumber: transfer.bankAccountNumber,
+                      bankAccountType:
+                        transfer.bankAccountType as BankAccountType,
+                      bankSwift: transfer.bankSwift,
+                      correspondentBank: transfer.correspondentBank,
+                      correspondentBankAddress:
+                        transfer.correspondentBankAddress,
+                      correspondentBankAccountNumber:
+                        transfer.correspondentBankAccountNumber,
+                      correspondentBankSwift: transfer.correspondentBankSwift,
+                      plantationId: updated.id,
+                    },
+                    where: {
+                      id: +transfer.id,
+                    },
+                  })),
+                },
+                checks: {
+                  deleteMany: {
+                    NOT: {
+                      id: { in: checksToUpdate.map((e) => +e.id) },
+                    },
+                  },
+                  createMany: {
+                    data: checksToCreate.map((check) => ({
+                      name: check.name,
+                      beneficiary: check.beneficiary,
+                      // documentPath: check.documentPath,
+                      favourite: check.favourite,
+                      plantationId: updated.id,
+                    })),
+                  },
+                  updateMany: checksToUpdate.map((check) => ({
+                    data: {
+                      name: check.name,
+                      beneficiary: check.beneficiary,
+                      // documentPath: check.documentPath,
+                      favourite: check.favourite,
+                      plantationId: updated.id,
+                    },
+                    where: {
+                      id: +check.id,
+                    },
+                  })),
+                },
+              },
+            });
+          },
+        );
+
+        await Promise.allSettled(updateLegalEntityPromises);
+
+        return updated.id;
       });
 
-      const updateLegalEntityPromises = updated.legalEntities.map(
-        (createdLegalEntity) => {
-          const legalEntityData = data.legalEntities.find(
-            (entity) => entity.name === createdLegalEntity.name,
-          );
-
-          const transferDetailsToCreate =
-            legalEntityData.transferDetails.filter((c) => uuidValidate(c.id));
-          const transferDetailsToUpdate =
-            legalEntityData.transferDetails.filter((c) => !uuidValidate(c.id));
-
-          const checksToCreate = legalEntityData.checks.filter((c) =>
-            uuidValidate(c.id),
-          );
-          const checksToUpdate = legalEntityData.checks.filter(
-            (c) => !uuidValidate(c.id),
-          );
-
-          // console.log(checksToCreate, 'checksToCreate');
-
-          return tx.plantationLegalEntity.update({
-            where: {
-              id: createdLegalEntity.id,
-            },
-            data: {
-              transferDetails: {
-                deleteMany: {
-                  NOT: {
-                    id: { in: transferDetailsToUpdate.map((e) => +e.id) },
-                  },
-                },
-                createMany: {
-                  data: transferDetailsToCreate.map((transfer) => ({
-                    name: transfer.name,
-                    favourite: transfer.favourite,
-                    beneficiary: transfer.beneficiary,
-                    beneficiaryAddress: transfer.beneficiaryAddress,
-                    // documentPath: transfer.documentPath,
-                    bank: transfer.bank,
-                    bankAddress: transfer.bankAddress,
-                    bankAccountNumber: transfer.bankAccountNumber,
-                    bankAccountType:
-                      transfer.bankAccountType as BankAccountType,
-                    bankSwift: transfer.bankSwift,
-                    correspondentBank: transfer.correspondentBank,
-                    correspondentBankAddress: transfer.correspondentBankAddress,
-                    correspondentBankAccountNumber:
-                      transfer.correspondentBankAccountNumber,
-                    correspondentBankSwift: transfer.correspondentBankSwift,
-                    plantationId: updated.id,
-                  })),
-                },
-                updateMany: transferDetailsToUpdate.map((transfer) => ({
-                  data: {
-                    name: transfer.name,
-                    favourite: transfer.favourite,
-                    beneficiary: transfer.beneficiary,
-                    beneficiaryAddress: transfer.beneficiaryAddress,
-                    // documentPath: transfer.documentPath,
-                    bank: transfer.bank,
-                    bankAddress: transfer.bankAddress,
-                    bankAccountNumber: transfer.bankAccountNumber,
-                    bankAccountType:
-                      transfer.bankAccountType as BankAccountType,
-                    bankSwift: transfer.bankSwift,
-                    correspondentBank: transfer.correspondentBank,
-                    correspondentBankAddress: transfer.correspondentBankAddress,
-                    correspondentBankAccountNumber:
-                      transfer.correspondentBankAccountNumber,
-                    correspondentBankSwift: transfer.correspondentBankSwift,
-                    plantationId: updated.id,
-                  },
-                  where: {
-                    id: +transfer.id,
-                  },
-                })),
-              },
-              checks: {
-                deleteMany: {
-                  NOT: {
-                    id: { in: checksToUpdate.map((e) => +e.id) },
-                  },
-                },
-                createMany: {
-                  data: checksToCreate.map((check) => ({
-                    name: check.name,
-                    beneficiary: check.beneficiary,
-                    // documentPath: check.documentPath,
-                    favourite: check.favourite,
-                    plantationId: updated.id,
-                  })),
-                },
-                updateMany: checksToUpdate.map((check) => ({
-                  data: {
-                    name: check.name,
-                    beneficiary: check.beneficiary,
-                    // documentPath: check.documentPath,
-                    favourite: check.favourite,
-                    plantationId: updated.id,
-                  },
-                  where: {
-                    id: +check.id,
-                  },
-                })),
-              },
-            },
-          });
-        },
-      );
-
-      await Promise.allSettled(updateLegalEntityPromises);
-
-      return updated.id;
-    });
-
-    return this.findOne(updatedId);
+      return this.findOne(updatedId);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   remove(id: number, userId: number) {
@@ -480,5 +498,95 @@ export class PlantationsService {
         id,
       },
     });
+  }
+
+  async excel(filter: FilterPlantationDto) {
+    const plantations = await this.search(filter);
+    const workbook = new Workbook();
+    const worksheet = workbook.addWorksheet('Fincas');
+    worksheet.columns = [
+      {
+        header: '№',
+        key: 'id',
+        width: 10,
+      },
+      { header: 'País', key: 'country', width: 32 },
+      { header: 'Nombre comercial', key: 'name', width: 32 },
+      {
+        header: 'Razón social',
+        key: 'legacyName',
+        width: 32,
+      },
+      {
+        header: 'Condiciones de pago',
+        key: 'termsOfPayment',
+        width: 32,
+      },
+      {
+        header: 'Monto de crédito',
+        key: 'postpaidCredit',
+        width: 32,
+      },
+      {
+        header: 'Observaciones',
+        key: 'comments',
+        width: 32,
+      },
+    ];
+    worksheet.getCell('A1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('B1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('C1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('D1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('E1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('F1').font = {
+      size: 16,
+      bold: true,
+    };
+    worksheet.getCell('G1').font = {
+      size: 16,
+      bold: true,
+    };
+    const data: {
+      id: number;
+      country: string;
+      name: string;
+      legacyName: string;
+      termsOfPayment: string;
+      postpaidCredit: number;
+      comments: string;
+    }[] = [];
+    for (const plantation of plantations) {
+      data.push({
+        id: plantation.id,
+        country: plantation.country,
+        name: plantation.name,
+        legacyName: plantation.legalEntities.map((e) => e.name).join(', '),
+        termsOfPayment: plantation.termsOfPayment,
+        postpaidCredit: plantation.postpaidCredit,
+        comments: plantation.comments,
+      });
+    }
+
+    data.forEach((val) => {
+      worksheet.addRow(val);
+    });
+    // await workbook.xlsx.writeFile('./public/Profile.xlsx');
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer;
   }
 }
