@@ -17,38 +17,10 @@ export class GroupsService {
   }
 
   buildSearchParams = (filter?: { search: string; type: string }) => {
-    const include: Prisma.GroupInclude = {
-      categories: {
-        where: {
-          deleted: false,
-        },
-        orderBy: {
-          name: 'asc',
-        },
-        include: {
-          sorts: {
-            where: {
-              deleted: false,
-            },
-            orderBy: {
-              name: 'asc',
-            },
-          },
-        },
-      },
-    };
-    if (!filter?.search) {
-      return {
-        where: {
-          deleted: false,
-        },
-        include,
-      };
-    }
-
     return {
       where: {
         deleted: false,
+
         ...(filter.type === 'group' && filter.search
           ? {
               name: {
@@ -57,10 +29,12 @@ export class GroupsService {
               },
             }
           : {}),
+
         ...(filter.type === 'category' && filter.search
           ? {
               categories: {
                 some: {
+                  deleted: false,
                   name: {
                     contains: filter.search,
                     mode: Prisma.QueryMode.insensitive,
@@ -73,8 +47,10 @@ export class GroupsService {
           ? {
               categories: {
                 some: {
+                  deleted: false,
                   sorts: {
                     some: {
+                      deleted: false,
                       name: {
                         contains: filter.search,
                         mode: Prisma.QueryMode.insensitive,
@@ -86,7 +62,36 @@ export class GroupsService {
             }
           : {}),
       },
-      include,
+      include: {
+        categories: {
+          where: {
+            deleted: false,
+            ...(filter.type === 'category' && filter.search
+              ? {
+                  name: {
+                    contains: filter.search,
+                    mode: Prisma.QueryMode.insensitive,
+                  },
+                }
+              : {}),
+          },
+          include: {
+            sorts: {
+              where: {
+                deleted: false,
+                ...(filter.type === 'sort' && filter.search
+                  ? {
+                      name: {
+                        contains: filter.search,
+                        mode: Prisma.QueryMode.insensitive,
+                      },
+                    }
+                  : {}),
+              },
+            },
+          },
+        },
+      },
     };
   };
 
