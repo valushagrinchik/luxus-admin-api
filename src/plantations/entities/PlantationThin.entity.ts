@@ -1,22 +1,10 @@
 import {
   ChecksDeliveryMethod,
-  PlantationLegalEntity as PlantationLegalEntityPrisma,
   Plantation as PlantationPrisma,
   TermsOfPayment,
 } from '@prisma/client';
 import { Exclude, Expose, Transform } from 'class-transformer';
-
-export class PlantationLegalEntity implements PlantationLegalEntityPrisma {
-  id: number;
-  name: string;
-  code: string;
-  legalAddress: string;
-  actualAddress: string;
-  plantationId: number;
-  constructor(partial: PlantationPrisma) {
-    Object.assign(this, partial);
-  }
-}
+import { PlantationLegalEntity } from './PlantationLegalEntity.entity';
 
 export class PlantationThin implements PlantationPrisma {
   id: number;

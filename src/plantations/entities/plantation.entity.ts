@@ -1,13 +1,13 @@
 import {
   ChecksDeliveryMethod,
-  PlantationChecks,
-  PlantationContacts,
-  PlantationLegalEntity,
   Plantation as PlantationPrisma,
-  PlantationTransferDetails,
   TermsOfPayment,
 } from '@prisma/client';
-import { Exclude } from 'class-transformer';
+import { Exclude, Transform } from 'class-transformer';
+import { PlantationLegalEntity } from './PlantationLegalEntity.entity';
+import { PlantationChecks } from './PlantationChecks.entity';
+import { PlantationTransferDetails } from './PlantationTransferDetails.entity';
+import { PlantationContacts } from './PlantationContacts.entity';
 
 export class Plantation implements PlantationPrisma {
   id: number;
@@ -20,9 +20,24 @@ export class Plantation implements PlantationPrisma {
   postpaidCredit: number | null;
   postpaidDays: number | null;
 
+  @Transform(({ value }) => {
+    return value.map((obj: any) => new PlantationLegalEntity(obj));
+  })
   legalEntities: PlantationLegalEntity[];
+
+  @Transform(({ value }) => {
+    return value.map((obj: any) => new PlantationContacts(obj));
+  })
   contacts: PlantationContacts[];
+
+  @Transform(({ value }) => {
+    return value.map((obj: any) => new PlantationTransferDetails(obj));
+  })
   transferDetails: PlantationTransferDetails[];
+
+  @Transform(({ value }) => {
+    return value.map((obj: any) => new PlantationChecks(obj));
+  })
   checks: PlantationChecks[];
 
   deletedAt: Date;

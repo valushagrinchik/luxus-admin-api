@@ -15,10 +15,8 @@ import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 import {
   ChecksDeliveryMethod,
   Plantation,
-  PlantationChecks,
   PlantationDepartmanet,
   PlantationLegalEntity,
-  PlantationTransferDetails,
   Prisma,
   TermsOfPayment,
 } from '@prisma/client';
@@ -93,10 +91,21 @@ export class PlantationsService {
                 transferDetails: {
                   createMany: {
                     data: legalEntityData.transferDetails.map((transfer) => ({
-                      ...(omit(transfer, ['id', 'document']) as Omit<
-                        PlantationTransferDetails,
-                        'id' | 'document'
-                      >),
+                      ...pick(transfer, [
+                        'name',
+                        'favourite',
+                        'beneficiary',
+                        'beneficiaryAddress',
+                        'bank',
+                        'bankAddress',
+                        'bankAccountNumber',
+                        'bankAccountType',
+                        'bankSwift',
+                        'correspondentBank',
+                        'correspondentBankAddress',
+                        'correspondentBankAccountNumber',
+                        'correspondentBankSwift',
+                      ]),
                       documentId: transfer.document?.id,
                       plantationId: created.id,
                     })),
@@ -105,10 +114,9 @@ export class PlantationsService {
                 checks: {
                   createMany: {
                     data: legalEntityData.checks.map((check) => ({
-                      ...(omit(check, ['id', 'document']) as Omit<
-                        PlantationChecks,
-                        'id' | 'document'
-                      >),
+                      name: check.name,
+                      beneficiary: check.beneficiary,
+                      favourite: check.favourite,
                       documentId: check.document?.id,
                       plantationId: created.id,
                     })),
@@ -119,7 +127,21 @@ export class PlantationsService {
           },
         );
 
-        await Promise.allSettled(updateLegalEntityPromises);
+        const results = await Promise.allSettled(updateLegalEntityPromises);
+        const rejectedReasons = results.filter(isRejected).map((p) => p.reason);
+
+        this.logger.warn(rejectedReasons, 'rejectedReasons');
+
+        if (rejectedReasons.length) {
+          throw new HttpException(
+            {
+              statusCode: HttpStatus.BAD_REQUEST,
+              error: ERROR_CODES.OPERATION_FAILED,
+              message: rejectedReasons,
+            },
+            HttpStatus.BAD_REQUEST,
+          );
+        }
 
         return created.id;
       });
