@@ -1,5 +1,14 @@
+import {
+  BankAccountType,
+  ChecksDeliveryMethod,
+  PlantationDepartmanet,
+  TermsOfPayment,
+} from '@prisma/client';
 import { IsNotEmpty } from 'class-validator';
-
+export class Document {
+  id: number;
+  name: string;
+}
 export class TransferDetails {
   @IsNotEmpty()
   name: string;
@@ -9,7 +18,7 @@ export class TransferDetails {
   @IsNotEmpty()
   beneficiary: string;
   beneficiaryAddress: string;
-  documentPath: any;
+  document?: Document;
 
   @IsNotEmpty()
   bank: string;
@@ -17,7 +26,7 @@ export class TransferDetails {
   @IsNotEmpty()
   bankAccountNumber: string;
   @IsNotEmpty()
-  bankAccountType: string;
+  bankAccountType: BankAccountType;
   bankSwift: string;
 
   correspondentBank: string;
@@ -33,7 +42,7 @@ export class PlantationChecks {
   favourite: boolean;
   @IsNotEmpty()
   beneficiary: string;
-  documentPath: any;
+  document?: Document;
 }
 
 export class LegalEntity {
@@ -66,7 +75,7 @@ export class Contact {
   @IsNotEmpty()
   position: string;
   @IsNotEmpty()
-  department: string;
+  department: PlantationDepartmanet;
 }
 
 export class CreatePlantationDto {
@@ -78,8 +87,8 @@ export class CreatePlantationDto {
 
   comments: string;
 
-  deliveryMethod: string;
-  termsOfPayment: string;
+  deliveryMethod: ChecksDeliveryMethod;
+  termsOfPayment: TermsOfPayment;
 
   postpaidCredit: string;
   postpaidDays: string;

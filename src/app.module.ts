@@ -15,19 +15,21 @@ import { APP_GUARD } from '@nestjs/core';
 import { CategoriesModule } from './categories/categories.module';
 import { PlantationsModule } from './plantations/plantations.module';
 import { JwtService } from '@nestjs/jwt';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
-    SortsModule,
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    SortsModule,
     GroupsModule,
     UsersModule,
     AuthModule,
     PrismaModule,
     CategoriesModule,
     PlantationsModule,
+    UploadsModule,
   ],
   controllers: [AppController, AuthController],
   providers: [

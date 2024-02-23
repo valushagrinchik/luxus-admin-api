@@ -16,27 +16,29 @@ import { PlantationsService } from './plantations.service';
 import { CreatePlantationDto } from './dto/create-plantation.dto';
 import { UpdatePlantationDto } from './dto/update-plantation.dto';
 import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
-import { Plantation } from './entities/plantation.entity';
+import { Plantation } from './entities/Plantation.entity';
 import { FilterPlantationDto } from './dto/filter-plantation.dto';
 import { Readable } from 'stream';
+import { PlantationThin } from './entities/PlantationThin.entity';
 
 @Controller('plantations')
 export class PlantationsController {
   constructor(private readonly plantationsService: PlantationsService) {}
 
-  @UseInterceptors(ClassSerializerInterceptor)
   @Post()
-  create(@Body() createPlantationDto: CreatePlantationDto) {
-    return this.plantationsService.create(createPlantationDto);
+  async create(@Body() createPlantationDto: CreatePlantationDto) {
+    const plantationId =
+      await this.plantationsService.create(createPlantationDto);
+    return { plantation: plantationId };
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get()
-  findAll() {
-    return this.plantationsService.findAll();
+  async findAll() {
+    const plantations = await this.plantationsService.findAll();
+    return plantations.map((plantation) => new Plantation(plantation));
   }
 
-  @UseInterceptors(ClassSerializerInterceptor)
   @Get('excel')
   async excel(
     @Query()
@@ -57,12 +59,11 @@ export class PlantationsController {
       offset: number;
       limit: number;
     },
-  ): Promise<Plantation[]> {
+  ): Promise<PlantationThin[]> {
     const plantations = await this.plantationsService.search(search);
-    return plantations.map((plantation) => new Plantation(plantation));
+    return plantations.map((plantation) => new PlantationThin(plantation));
   }
 
-  @UseInterceptors(ClassSerializerInterceptor)
   @Get('search/total')
   async searchTotal(
     @Query()
@@ -74,21 +75,23 @@ export class PlantationsController {
 
   @UseInterceptors(ClassSerializerInterceptor)
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.plantationsService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const plantation = await this.plantationsService.findOne(+id);
+    return new Plantation(plantation);
   }
 
-  @UseInterceptors(ClassSerializerInterceptor)
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updatePlantationDto: UpdatePlantationDto,
   ) {
-    const res = await this.plantationsService.update(+id, updatePlantationDto);
-    return res;
+    const plantationId = await this.plantationsService.update(
+      +id,
+      updatePlantationDto,
+    );
+    return { plantation: plantationId };
   }
 
-  @UseInterceptors(ClassSerializerInterceptor)
   @Post(':id')
   async cancel(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
@@ -96,7 +99,6 @@ export class PlantationsController {
     return { plantation: id };
   }
 
-  @UseInterceptors(ClassSerializerInterceptor)
   @Delete(':id')
   async remove(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);

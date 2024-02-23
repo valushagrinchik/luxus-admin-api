@@ -161,7 +161,6 @@ model PlantationTransferDetails {
 
   beneficiary        String
   beneficiaryAddress String?
-  documentPath       String?
 
   bank              String
   bankAddress       String?
@@ -180,14 +179,16 @@ model PlantationTransferDetails {
   plantationLegalEntityId Int
   legalEntity             PlantationLegalEntity @relation("plantationLegalEntityTransferDetails", fields: [plantationLegalEntityId], references: [id], onDelete: Cascade)
 
+  documentId Int?     @unique
+  document   Uploads? @relation(fields: [documentId], references: [id])
+
   @@map("plantation_transfer_details")
 }
 
 model PlantationChecks {
-  id           Int     @id @default(autoincrement())
-  name         String
-  beneficiary  String
-  documentPath String?
+  id          Int    @id @default(autoincrement())
+  name        String
+  beneficiary String
 
   favourite Boolean @default(false)
 
@@ -197,5 +198,22 @@ model PlantationChecks {
   plantationLegalEntityId Int
   legalEntity             PlantationLegalEntity @relation("plantationLegalEntityChecks", fields: [plantationLegalEntityId], references: [id], onDelete: Cascade)
 
+  documentId Int?     @unique
+  document   Uploads? @relation(fields: [documentId], references: [id])
+
   @@map("plantation_checks")
+}
+
+model Uploads {
+  id       Int    @id @default(autoincrement())
+  // originalname
+  name     String
+  mimetype String
+  path     String
+  size     Int
+
+  check           PlantationChecks?
+  transferDetails PlantationTransferDetails?
+
+  @@map("uploads")
 }
