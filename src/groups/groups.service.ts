@@ -224,6 +224,11 @@ export class GroupsService {
     const worksheet = workbook.addWorksheet('Variedades');
     worksheet.columns = [
       {
+        header: '№',
+        key: 'id',
+        width: 10,
+      },
+      {
         header: 'Grupo',
         key: 'group',
         width: 32,
@@ -232,24 +237,38 @@ export class GroupsService {
       { header: 'Variedad', key: 'sort', width: 32 },
     ];
     worksheet.getCell('A1').font = {
-      size: 16,
+      size: 14,
       bold: true,
     };
     worksheet.getCell('B1').font = {
-      size: 16,
+      size: 14,
       bold: true,
     };
     worksheet.getCell('C1').font = {
-      size: 16,
+      size: 14,
       bold: true,
     };
-    const data: { group: string; category: string; sort: string }[] = [];
+    worksheet.getCell('D1').font = {
+      size: 14,
+      bold: true,
+    };
+    const data: {
+      id: string;
+      group: string;
+      category: string;
+      sort: string;
+    }[] = [];
     for (const group of groups) {
-      data.push({ group: group.name, category: '', sort: '' });
+      data.push({ id: '', group: group.name, category: '', sort: '' });
       for (const category of group.categories) {
-        data.push({ group: '', category: category.name, sort: '' });
+        data.push({ id: '', group: '', category: category.name, sort: '' });
         for (const sort of category.sorts) {
-          data.push({ group: '', category: '', sort: sort.name });
+          data.push({
+            id: sort.id.toString(),
+            group: '',
+            category: '',
+            sort: sort.name,
+          });
         }
       }
     }
