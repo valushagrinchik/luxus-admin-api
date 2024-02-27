@@ -92,7 +92,7 @@ export class PlantationsController {
     return { plantation: plantationId };
   }
 
-  @Post(':id')
+  @Post(':id/cancel')
   async cancel(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
     await this.plantationsService.cancel(+id, user);

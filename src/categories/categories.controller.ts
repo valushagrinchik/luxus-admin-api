@@ -49,7 +49,7 @@ export class CategoriesController {
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post(':id')
+  @Post(':id/cancel')
   async cancel(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
     await this.categoriesService.cancel(+id, user);

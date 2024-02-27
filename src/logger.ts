@@ -3,9 +3,8 @@ import * as winston from 'winston';
 import 'winston-daily-rotate-file';
 
 const { combine, timestamp, json, ms } = winston.format;
-
 export const instance = winston.createLogger({
-  level: 'info',
+  level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
   format: combine(timestamp(), json()),
   transports: [
     new winston.transports.Console({

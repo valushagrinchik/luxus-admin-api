@@ -100,7 +100,7 @@ export class GroupsController {
   }
 
   @UseInterceptors(ClassSerializerInterceptor)
-  @Post(':id')
+  @Post(':id/cancel')
   async cancel(@Req() request: Request, @Param('id') id: string) {
     const user = new AuthorizedUser(request['user']);
     await this.groupsService.cancel(+id, user);
