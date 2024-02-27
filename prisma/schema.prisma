@@ -89,6 +89,7 @@ model Plantation {
   country        String
   comments       String?
   deliveryMethod ChecksDeliveryMethod @default(PERSONALLY)
+  deliveryInfo   String?
 
   termsOfPayment TermsOfPayment @default(PAIDUPONACTUAL)
   postpaidCredit Float?

@@ -49,6 +49,7 @@ export class PlantationsService {
               'country',
               'comments',
               'deliveryMethod',
+              'deliveryInfo',
               'termsOfPayment',
             ]),
             postpaidCredit: data.postpaidCredit
@@ -267,11 +268,14 @@ export class PlantationsService {
             legalEntities: true,
           },
           data: {
-            name: data.name,
-            country: data.country,
-            comments: data.comments,
-            deliveryMethod: data.deliveryMethod as ChecksDeliveryMethod,
-            termsOfPayment: data.termsOfPayment as TermsOfPayment,
+            ...(pick(data, [
+              'name',
+              'country',
+              'comments',
+              'deliveryMethod',
+              'deliveryInfo',
+              'termsOfPayment',
+            ]) as Record<string, any>),
             postpaidCredit: data.postpaidCredit
               ? +data.postpaidCredit
               : undefined,

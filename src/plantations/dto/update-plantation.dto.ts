@@ -29,6 +29,7 @@ export class UpdatePlantationDto {
   comments: string;
 
   deliveryMethod: string;
+  deliveryInfo: string;
   termsOfPayment: string;
 
   postpaidCredit: string;

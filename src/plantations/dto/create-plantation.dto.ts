@@ -88,6 +88,7 @@ export class CreatePlantationDto {
   comments: string;
 
   deliveryMethod: ChecksDeliveryMethod;
+  deliveryInfo: string;
   termsOfPayment: TermsOfPayment;
 
   postpaidCredit: string;

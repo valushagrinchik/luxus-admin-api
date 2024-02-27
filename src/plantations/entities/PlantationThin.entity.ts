@@ -13,6 +13,8 @@ export class PlantationThin implements PlantationPrisma {
   country: string;
   comments: string | null;
   deliveryMethod: ChecksDeliveryMethod;
+  deliveryInfo: string;
+
   termsOfPayment: TermsOfPayment;
   postpaidCredit: number | null;
   postpaidDays: number | null;
