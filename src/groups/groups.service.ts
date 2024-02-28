@@ -115,9 +115,6 @@ export class GroupsService {
   }): Promise<FullGroupsArray> {
     const res = await this.prisma.group.findMany({
       ...this.buildSearchParams(filter),
-      orderBy: {
-        name: 'asc',
-      },
       ...(filter.offset ? { skip: +filter.offset } : {}),
       ...(filter.limit ? { take: +filter.limit } : {}),
     });
@@ -236,22 +233,19 @@ export class GroupsService {
       { header: 'Categoria', key: 'category', width: 32 },
       { header: 'Variedad', key: 'sort', width: 32 },
     ];
-    worksheet.getCell('A1').font = {
-      size: 14,
-      bold: true,
-    };
-    worksheet.getCell('B1').font = {
-      size: 14,
-      bold: true,
-    };
-    worksheet.getCell('C1').font = {
-      size: 14,
-      bold: true,
-    };
-    worksheet.getCell('D1').font = {
-      size: 14,
-      bold: true,
-    };
+
+    for (let i = 1; i <= worksheet.columnCount; i++) {
+      worksheet.getColumn(i).font = { size: 14 };
+    }
+
+    const headerRow = worksheet.getRow(1);
+    for (let i = 1; i <= headerRow.cellCount; i++) {
+      headerRow.getCell(i).font = {
+        size: 14,
+        bold: true,
+      };
+    }
+
     const data: {
       id: string;
       group: string;

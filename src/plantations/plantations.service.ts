@@ -28,7 +28,7 @@ import {
 import { FilterPlantationDto } from './dto/filter-plantation.dto';
 import { validate as uuidValidate } from 'uuid';
 import { Workbook } from 'exceljs';
-import { omit, pick } from 'lodash';
+import { omit, orderBy, pick } from 'lodash';
 import { isRejected } from 'src/utils';
 
 type FullPlantationsArray = (Plantation & {
@@ -267,7 +267,12 @@ export class PlantationsService {
       ...(filter.offset ? { skip: +filter.offset } : {}),
       ...(filter.limit ? { take: +filter.limit } : {}),
     });
-    return response as FullPlantationsArray;
+
+    return orderBy(
+      response,
+      [(pl) => pl.name.toLowerCase()],
+      ['asc'],
+    ) as FullPlantationsArray;
   }
 
   async update(id: number, data: UpdatePlantationDto) {
