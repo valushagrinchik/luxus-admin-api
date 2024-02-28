@@ -210,6 +210,30 @@ export class PlantationsService {
               },
             }
           : {}),
+        ...(filter.type && filter.search
+          ? {
+              ...(filter.type === 'name'
+                ? {
+                    name: {
+                      contains: filter.search,
+                      mode: Prisma.QueryMode.insensitive,
+                    },
+                  }
+                : {}),
+              ...(filter.type === 'legalEntityName'
+                ? {
+                    legalEntities: {
+                      some: {
+                        name: {
+                          contains: filter.search,
+                          mode: Prisma.QueryMode.insensitive,
+                        },
+                      },
+                    },
+                  }
+                : {}),
+            }
+          : {}),
       },
     };
   };

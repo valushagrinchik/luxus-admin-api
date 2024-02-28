@@ -5,6 +5,7 @@ import {
 } from '@prisma/client';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { PlantationLegalEntity } from './PlantationLegalEntity.entity';
+import { orderBy } from 'lodash';
 
 export class PlantationThin implements PlantationPrisma {
   id: number;
@@ -25,8 +26,9 @@ export class PlantationThin implements PlantationPrisma {
   legalEntities: PlantationLegalEntity[];
 
   @Expose()
-  get legalEntitiesNames(): string[] {
-    return this.legalEntities.map((entity) => entity.name);
+  get legalEntitiesNames(): string {
+    const names = this.legalEntities.map((entity) => entity.name);
+    return orderBy(names, (name) => name.toLowerCase()).join('\n');
   }
 
   deletedAt: Date;
