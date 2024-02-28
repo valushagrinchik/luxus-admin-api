@@ -84,11 +84,11 @@ enum TermsOfPayment {
 }
 
 model Plantation {
-  id             Int                  @id @default(autoincrement())
+  id             Int                   @id @default(autoincrement())
   name           String
   country        String
   comments       String?
-  deliveryMethod ChecksDeliveryMethod @default(PERSONALLY)
+  deliveryMethod ChecksDeliveryMethod?
   deliveryInfo   String?
 
   termsOfPayment TermsOfPayment @default(PAIDUPONACTUAL)

@@ -13,7 +13,7 @@ export class PlantationChecks implements PlantationChecksPrisma {
   documentId: number | null;
 
   @Transform(({ value }) => {
-    return new Upload(value);
+    return value ? new Upload(value) : null;
   })
   document: Upload;
 

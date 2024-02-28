@@ -52,10 +52,8 @@ export class PlantationsService {
               'deliveryInfo',
               'termsOfPayment',
             ]),
-            postpaidCredit: data.postpaidCredit
-              ? +data.postpaidCredit
-              : undefined,
-            postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
+            postpaidCredit: +data.postpaidCredit,
+            postpaidDays: +data.postpaidDays,
 
             legalEntities: {
               createMany: {
@@ -276,10 +274,8 @@ export class PlantationsService {
               'deliveryInfo',
               'termsOfPayment',
             ]) as Record<string, any>),
-            postpaidCredit: data.postpaidCredit
-              ? +data.postpaidCredit
-              : undefined,
-            postpaidDays: data.postpaidDays ? +data.postpaidDays : undefined,
+            postpaidCredit: +data.postpaidCredit,
+            postpaidDays: +data.postpaidDays,
 
             legalEntities: {
               deleteMany: {
