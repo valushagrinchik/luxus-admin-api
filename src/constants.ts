@@ -26,3 +26,14 @@ export const ERROR_MESSAGES = {
   [ERROR_CODES.UPLOAD_NOT_FOUND]: 'Файла не существует',
   [ERROR_CODES.OPERATION_FAILED]: 'ОПЕРАЦИЯ НЕ УДАЛАСЬ',
 };
+
+export const TERMS_OF_PAYMENTS = {
+  PREPAID: 'Prepago',
+  PAIDUPONACTUAL: 'Pago al contado',
+  POSTPAID: 'Pago diferido',
+};
+
+export const COUNTRIES = {
+  ec: 'Ecuador',
+  co: 'Colombia',
+};

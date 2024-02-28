@@ -10,7 +10,12 @@ import {
 import { CreatePlantationDto } from './dto/create-plantation.dto';
 import { UpdatePlantationDto } from './dto/update-plantation.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { ERROR_CODES, ERROR_MESSAGES } from 'src/constants';
+import {
+  COUNTRIES,
+  ERROR_CODES,
+  ERROR_MESSAGES,
+  TERMS_OF_PAYMENTS,
+} from 'src/constants';
 import { AuthorizedUser } from 'src/auth/entities/authorized-user.entity';
 import {
   ChecksDeliveryMethod,
@@ -558,15 +563,25 @@ export class PlantationsService {
   async excel(filter: FilterPlantationDto) {
     const plantations = await this.search(filter);
     const workbook = new Workbook();
+
     const worksheet = workbook.addWorksheet('Fincas');
+
     worksheet.columns = [
       {
         header: '№',
         key: 'id',
         width: 10,
       },
-      { header: 'País', key: 'country', width: 32 },
-      { header: 'Nombre comercial', key: 'name', width: 32 },
+      {
+        header: 'País',
+        key: 'country',
+        width: 32,
+      },
+      {
+        header: 'Nombre comercial',
+        key: 'name',
+        width: 32,
+      },
       {
         header: 'Razón social',
         key: 'legacyName',
@@ -588,34 +603,21 @@ export class PlantationsService {
         width: 32,
       },
     ];
-    worksheet.getCell('A1').font = {
-      size: 16,
-      bold: true,
-    };
-    worksheet.getCell('B1').font = {
-      size: 16,
-      bold: true,
-    };
-    worksheet.getCell('C1').font = {
-      size: 16,
-      bold: true,
-    };
-    worksheet.getCell('D1').font = {
-      size: 16,
-      bold: true,
-    };
-    worksheet.getCell('E1').font = {
-      size: 16,
-      bold: true,
-    };
-    worksheet.getCell('F1').font = {
-      size: 16,
-      bold: true,
-    };
-    worksheet.getCell('G1').font = {
-      size: 16,
-      bold: true,
-    };
+
+    worksheet.getColumn(7).alignment = { vertical: 'top', wrapText: true };
+
+    for (let i = 1; i <= worksheet.columnCount; i++) {
+      worksheet.getColumn(i).font = { size: 14 };
+    }
+
+    const headerRow = worksheet.getRow(1);
+    for (let i = 1; i <= headerRow.cellCount; i++) {
+      headerRow.getCell(i).font = {
+        size: 14,
+        bold: true,
+      };
+    }
+
     const data: {
       id: number;
       country: string;
@@ -628,11 +630,11 @@ export class PlantationsService {
     for (const plantation of plantations) {
       data.push({
         id: plantation.id,
-        country: plantation.country,
+        country: COUNTRIES[plantation.country],
         name: plantation.name,
         legacyName: plantation.legalEntities.map((e) => e.name).join(', '),
-        termsOfPayment: plantation.termsOfPayment,
-        postpaidCredit: plantation.postpaidCredit,
+        termsOfPayment: TERMS_OF_PAYMENTS[plantation.termsOfPayment],
+        postpaidCredit: plantation.postpaidCredit || null,
         comments: plantation.comments,
       });
     }
